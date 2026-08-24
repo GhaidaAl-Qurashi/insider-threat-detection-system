@@ -1,0 +1,9 @@
+{
+  ".png": {
+    "entropy_mean": 7.984,
+    "entropy_std": 0.004,
+    "bpp_mean": 1.4086,
+    "bpp_std": 0.1052,
+    "sample_count": 30
+  }
+}
