@@ -1,0 +1,141 @@
+<!--
+  Insider Threat Simulation and Detection System — Custom Wazuh Rules
+  KAUST Academy Cybersecurity Training | Team: Ghaida, Abrar, Shoujoon
+
+  Custom rule IDs use the 100000-120000 range reserved for local rules,
+  per Wazuh's own convention, to avoid colliding with the built-in ruleset.
+
+  CHANGE LOG
+  - 24 Aug 2026: rules 100101 / 100103 time window changed from the
+    testing value (12:00 am - 11:59 pm, i.e. all day) to a realistic
+    business-hours boundary (6:00 pm - 8:30 am), so the "off-hours
+    login" alert actually reflects a real environment instead of
+    always matching.
+-->
+
+<!-- ==========================================================
+     Reference example (Wazuh default local_rules.xml template)
+     Kept for reference; not part of the project's own detections.
+     ========================================================== -->
+<group name="local,syslog,sshd,">
+  <!--
+  Dec 10 01:02:02 host sshd[1234]: Failed none for root from 1.1.1.1 port 1066 ssh2
+  -->
+  <rule id="100001" level="5">
+    <if_sid>5716</if_sid>
+    <srcip>1.1.1.1</srcip>
+    <description>sshd: authentication failed from IP 1.1.1.1.</description>
+    <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+  </rule>
+</group>
+
+<!-- ==========================================================
+     Scenario 1 — Insider Threat (Employee-Insider, "Employee A / Finance")
+     Six-stage escalating-employee narrative.
+     ========================================================== -->
+
+<!--
+  DROPPED (24 Aug 2026): rules 100101/100102, built on if_sid 60118
+  ("Windows Workstation Logon Success", Wazuh default). That rule
+  requires logonType 2 (physical console logon) — this lab only ever
+  simulates access via RDP (logonType 10), so 60118 could never fire
+  here. Same class of issue as the Stage 6 rule swap (60117/18118 ->
+  63103/63104): a default rule ID that looks right on paper but
+  doesn't match this environment's actual event chain. Kept out
+  rather than left as dead weight.
+-->
+
+<!-- Stage 1: Off-hours / weekend access (if_sid 67022 — matches this
+     lab's actual RDP-based logon events; confirmed live) -->
+<group name="local,">
+  <rule id="100103" level="9">
+    <if_sid>67022</if_sid>
+    <time>6:00 pm - 8:30 am</time>
+    <description>Successful Windows login during non-business hours.</description>
+    <group>login_time,</group>
+  </rule>
+
+  <rule id="100104" level="9">
+    <if_sid>67022</if_sid>
+    <weekday>weekdays</weekday>
+    <description>Successful Windows login during weekend.</description>
+    <group>login_day,</group>
+  </rule>
+</group>
+
+<!-- Stage 3: Mass file copy (staging) -->
+<group name="local,">
+  <rule id="100105" level="10" frequency="10" timeframe="120">
+    <if_matched_sid>554</if_matched_sid>
+    <description>Mass file copy detected - possible data staging for exfiltration.</description>
+    <mitre>
+      <id>T1074</id>
+    </mitre>
+    <group>data_staging,</group>
+  </rule>
+</group>
+
+<!-- Stage 4: Steganography exfiltration -->
+<group name="steganography,">
+  <rule id="100020" level="12">
+    <decoded_as>json</decoded_as>
+    <field name="suspicious">true</field>
+    <description>Possible steganography detected: abnormal entropy in monitored image file</description>
+    <mitre>
+      <id>T1027.003</id>
+    </mitre>
+  </rule>
+</group>
+
+<!-- Stage 5: USB / removable media -->
+<group name="local,">
+  <rule id="100021" level="10">
+    <if_sid>60227</if_sid>
+    <match>USBSTOR</match>
+    <description>USB storage device connected - possible removable media exfiltration vector</description>
+    <mitre>
+      <id>T1092</id>
+    </mitre>
+    <group>usb_storage,</group>
+  </rule>
+</group>
+
+<!-- ==========================================================
+     Scenario 2 — External Attacker via Stolen Credentials
+     (Employee-Normal, "HR Employee" persona)
+     Verified live evidence chain: 100026 -> 100028 -> 100027 -> FIM
+     ========================================================== -->
+<group name="windows,file_monitoring,scenario2">
+
+  <!-- RDP access to Employee-Normal from the attacker-net segment -->
+  <rule id="100026" level="10">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^4624$</field>
+    <field name="win.eventdata.logonType">^10$</field>
+    <field name="win.eventdata.ipAddress">192\.168\.100\.20</field>
+    <description>RDP logon from attacker-net IP 192.168.100.20 by $(win.eventdata.targetUserName) — possible remote access via compromised credentials</description>
+    <mitre><id>T1021.001</id></mitre>
+  </rule>
+
+  <!-- Explicit-credential logon (net use), excluding Windows' own
+       internal DWM-*/UMFD-* session-setup noise -->
+  <rule id="100027" level="8">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^4648$</field>
+    <field name="win.eventdata.subjectUserName" negate="yes">.*\$$</field>
+    <field name="win.eventdata.targetServerName" negate="yes">^localhost$</field>
+    <description>Explicit-credential logon attempted by $(win.eventdata.subjectUserName) as $(win.eventdata.targetUserName) to $(win.eventdata.targetServerName) — possible use of alternate/compromised credentials</description>
+    <mitre><id>T1078</id></mitre>
+  </rule>
+
+  <!-- Outbound SMB connection to the Kali-hosted exfil share -->
+  <rule id="100028" level="8">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^5156$</field>
+    <field name="win.eventdata.destAddress">^192\.168\.100\.20$</field>
+    <field name="win.eventdata.destPort">^445$</field>
+    <description>Outbound SMB connection permitted to attacker-net IP 192.168.100.20:445 by $(win.eventdata.application) — data transfer to Kali in progress</description>
+    <mitre><id>T1048.002</id></mitre>
+  </rule>
+
+</group>

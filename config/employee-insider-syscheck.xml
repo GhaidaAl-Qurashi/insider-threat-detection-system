@@ -1,0 +1,16 @@
+<!--
+  Employee-Insider agent — <syscheck> block from ossec.conf
+  Path on the Windows agent: C:\Program Files (x86)\ossec-agent\ossec.conf
+
+  STATUS: PLACEHOLDER — not yet filled in.
+
+  Abrar: please paste the real, current <syscheck> block from
+  Employee-Insider's ossec.conf here (the folder(s) being watched for
+  Scenario 1 — Stage 2 access-outside-job-role and Stage 3 mass-copy
+  detection both depend on this). Nothing in this project's evidence
+  chain for Scenario 1 can be documented accurately until this is real,
+  not remembered.
+-->
+<syscheck>
+  <!-- PASTE THE REAL BLOCK HERE -->
+</syscheck>

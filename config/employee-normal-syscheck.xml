@@ -1,0 +1,15 @@
+<!--
+  Employee-Normal agent — <syscheck> block from ossec.conf
+  Path on the Windows agent: C:\Program Files (x86)\ossec-agent\ossec.conf
+
+  STATUS: best-known draft, reconstructed from our own working session —
+  NOT yet re-confirmed against the live file.
+
+  Shoujoon: please open the real file on Employee-Normal and either
+  confirm this matches, or paste the actual current block here so we're
+  submitting ground truth, not memory. (Same rule the whole project has
+  followed: verify against the live system before it goes in the report.)
+-->
+<syscheck>
+  <directories realtime="yes" report_changes="yes">C:\Corporate_Shares\HR_Department\02_Restricted_Executive_HR</directories>
+</syscheck>
