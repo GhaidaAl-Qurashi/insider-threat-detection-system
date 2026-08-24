@@ -4,7 +4,7 @@ KAUST Academy Cybersecurity Training project. A simulated corporate
 network generating both normal and malicious insider activity, monitored
 end-to-end with Wazuh, using a mix of built-in and custom detection rules.
 
-**Team:** Ghaida, Abrar, Shoujoon
+**Team:** Ghaida, Abrar, Shjoon
 
 ## Architecture
 
