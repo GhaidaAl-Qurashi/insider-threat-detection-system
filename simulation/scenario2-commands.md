@@ -6,7 +6,7 @@ Detection engine: Wazuh 4.14.6 · Target OS: Windows 11
 ---
 
 ### 0. Social Engineering — Phishing Email Delivery
-
+#### 1. Sending a Phishing Email to the target (HR Employee)
 Before any technical access is attempted, a phishing email is sent from a spoofed address to trick the HR employee into visiting the fake password reset page.
 
 **Email details:**
@@ -29,9 +29,7 @@ Meridian Holdings IT Security Team
 This is an automated message. Please do not reply directly to this email.
 
 ---
-
-### 1. Credential harvesting through a fake reset password page
-#### 1. Set up a basic index.html with a form posting to a simple PHP/Python capture script
+#### 2. Set up a basic index.html with a form posting to a simple PHP/Python capture script
 
 ##### Index.html:
 ``` html
@@ -161,12 +159,15 @@ This is an automated message. Please do not reply directly to this email.
 </body>
 </html>
 ```
-##### 2. Start the PHP web server 
+
+---
+### 1. Credential harvesting through a fake reset password page
+##### 1. Start the PHP web server 
 ```
 php -S 192.168.100.20:80
 ```
 
-##### 3. After the HR employee submits credentials, check the capture file
+##### 2. After the HR employee submits credentials, check the capture file
 
 ```
 cat ~/hrlogin/captured_creds.txt
